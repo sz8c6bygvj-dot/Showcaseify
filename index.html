@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Milestone Card Builder</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: #111827;
+      --card: #1e293b;
+      --card-hover: #243247;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      --accent: #38bdf8;
+      --accent-dark: #0284c7;
+      --planned: #a855f7;
+      --progress: #f59e0b;
+      --done: #22c55e;
+      --blocked: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 16px;
+    }
+
+    .app {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.45rem;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-size: 0.88rem;
+    }
+
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    button, select, input, textarea {
+      font-family: inherit;
+      font-size: 0.92rem;
+    }
+
+    button {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 8px 13px;
+      border-radius: 9px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    button:hover {
+      background: var(--card-hover);
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #06131e;
+      font-weight: 600;
+    }
+
+    button.primary:hover {
+      background: var(--accent-dark);
+      border-color: var(--accent-dark);
+      color: #ffffff;
+    }
+
+    button.danger {
+      border-color: rgba(239, 68, 68, 0.45);
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    button.danger:hover {
+      background: rgba(239, 68, 68, 0.22);
+    }
+
+    .stats-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .stats-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 9px;
+      background: var(--card);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--done));
+      transition: width 0.25s ease;
+    }
+
+    .builder-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 18px;
+    }
+
+    .builder-title {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    input, select, textarea {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 9px 11px;
+      width: 100%;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    textarea {
+      min-height: 74px;
+      resize: vertical;
+    }
+
+    .form-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #06131e;
+      font-weight: 600;
+    }
+
+    .search-box {
+      min-width: 210px;
+      flex: 0 1 260px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .milestone-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .project-tag {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .milestone-title {
+      margin: 4px 0 0;
+      font-size: 1.08rem;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .status-planned { background: rgba(168, 85, 247, 0.18); color: #d8b4fe; }
+    .status-in-progress { background: rgba(245, 158, 11, 0.18); color: #fcd34d; }
+    .status-completed { background: rgba(34, 197, 94, 0.18); color: #86efac; }
+    .status-blocked { background: rgba(239, 68, 68, 0.18); color: #fca5a5; }
+
+    .notes {
+      margin: 0;
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      white-space: pre-line;
+    }
+
+    .meta {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      border-top: 1px solid rgba(148, 163, 184, 0.15);
+      padding-top: 10px;
+    }
+
+    .card-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .card-actions button {
+      padding: 6px 10px;
+      font-size: 0.82rem;
+    }
+
+    .empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 36px 16px;
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      color: var(--muted);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      background: #0f172a;
+      color: #f8fafc;
+      border: 1px solid var(--accent);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.86rem;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>Milestone Card Builder</h1>
+        <p class="subtitle">Create project milestone cards, track completion, and copy client updates.</p>
+      </div>
+      <div class="top-actions">
+        <button type="button" id="copySummaryBtn">Copy Update</button>
+        <button type="button" id="exportBtn">Export JSON</button>
+        <button type="button" id="importTriggerBtn">Import JSON</button>
+        <input type="file" id="importFileInput" accept="application/json" hidden />
+      </div>
+    </header>
+
+    <section class="stats-card">
+      <div class="stats-row">
+        <span id="statsText">0 of 0 milestones completed (0%)</span>
+        <span id="statusCounts">Planned: 0 · In Progress: 0 · Completed: 0 · Blocked: 0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+    </section>
+
+    <section class="builder-panel">
+      <h2 class="builder-title" id="formHeading">New Milestone Card</h2>
+      <form id="milestoneForm">
+        <input type="hidden" id="editId" />
+        <div class="form-grid">
+          <div class="field">
+            <label for="projectName">Project Name *</label>
+            <input id="projectName" type="text" placeholder="e.g., Client Portal Redesign" required />
+          </div>
+          <div class="field">
+            <label for="milestoneTitle">Milestone Title *</label>
+            <input id="milestoneTitle" type="text" placeholder="e.g., Wireframes & User Flow" required />
+          </div>
+          <div class="field">
+            <label for="status">Status</label>
+            <select id="status">
+              <option value="planned">Planned</option>
+              <option value="in-progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="blocked">Blocked</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="priority">Priority</label>
+            <select id="priority">
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="dueDate">Target Date</label>
+            <input id="dueDate" type="date" />
+          </div>
+          <div class="field full">
+            <label for="notes">Deliverables / Notes</label>
+            <textarea id="notes" placeholder="Key deliverables, dependencies, or notes for this milestone..."></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="primary" id="saveBtn">Save Milestone Card</button>
+          <button type="button" id="cancelEditBtn" style="display:none;">Cancel Edit</button>
+        </div>
+      </form>
+    </section>
+
+    <div class="toolbar">
+      <div class="filters" id="filterBar">
+        <button type="button" class="filter-btn active" data-filter="all">All</button>
+        <button type="button" class="filter-btn" data-filter="planned">Planned</button>
+        <button type="button" class="filter-btn" data-filter="in-progress">In Progress</button>
+        <button type="button" class="filter-btn" data-filter="completed">Completed</button>
+        <button type="button" class="filter-btn" data-filter="blocked">Blocked</button>
+      </div>
+      <input type="search" class="search-box" id="searchInput" placeholder="Search project or milestone..." />
+    </div>
+
+    <section class="cards-grid" id="cardsGrid"></section>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = "milestone_cards_v1";
+
+    const STATUS_LABELS = {
+      "planned": "Planned",
+      "in-progress": "In Progress",
+      "completed": "Completed",
+      "blocked": "Blocked"
+    };
+
+    let milestones = loadMilestones();
+    let activeFilter = "all";
+    let searchQuery = "";
+
+    const form = document.getElementById("milestoneForm");
+    const editIdInput = document.getElementById("editId");
+    const projectInput = document.getElementById("projectName");
+    const titleInput = document.getElementById("milestoneTitle");
+    const statusInput = document.getElementById("status");
+    const priorityInput = document.getElementById("priority");
+    const dueDateInput = document.getElementById("dueDate");
+    const notesInput = document.getElementById("notes");
+    const formHeading = document.getElementById("formHeading");
+    const saveBtn = document.getElementById("saveBtn");
+    const cancelEditBtn = document.getElementById("cancelEditBtn");
+    const cardsGrid = document.getElementById("cardsGrid");
+    const searchInput = document.getElementById("searchInput");
+    const filterBar = document.getElementById("filterBar");
+    const toastEl = document.getElementById("toast");
+
+    function showToast(message) {
+      toastEl.textContent = message;
+      toastEl.classList.add("show");
+      clearTimeout(showToast._timer);
+      showToast._timer = setTimeout(() => toastEl.classList.remove("show"), 2200);
+    }
+
+    function loadMilestones() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          return [
+            {
+              id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+              project: "Sample Project",
+              title: "Core MVP & Live Deployment",
+              status: "completed",
+              priority: "High",
+              dueDate: "",
+              notes: "Published initial version and verified mobile layout."
+            }
+          ];
+        }
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveMilestones() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(milestones));
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function resetForm() {
+      form.reset();
+      editIdInput.value = "";
+      formHeading.textContent = "New Milestone Card";
+      saveBtn.textContent = "Save Milestone Card";
+      cancelEditBtn.style.display = "none";
+    }
+
+    function startEdit(id) {
+      const item = milestones.find((m) => m.id === id);
+      if (!item) return;
+      editIdInput.value = item.id;
+      projectInput.value = item.project;
+      titleInput.value = item.title;
+      statusInput.value = item.status;
+      priorityInput.value = item.priority;
+      dueDateInput.value = item.dueDate || "";
+      notesInput.value = item.notes || "";
+      formHeading.textContent = "Edit Milestone Card";
+      saveBtn.textContent = "Update Milestone";
+      cancelEditBtn.style.display = "inline-block";
+      projectInput.focus();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function cycleStatus(id) {
+      const order = ["planned", "in-progress", "completed", "blocked"];
+      milestones = milestones.map((m) => {
+        if (m.id !== id) return m;
+        const next = order[(order.indexOf(m.status) + 1) % order.length];
+        return { ...m, status: next };
+      });
+      saveMilestones();
+      render();
+    }
+
+    function deleteMilestone(id) {
+      milestones = milestones.filter((m) => m.id !== id);
+      if (editIdInput.value === id) resetForm();
+      saveMilestones();
+      render();
+      showToast("Milestone deleted");
+    }
+
+    function renderStats() {
+      const total = milestones.length;
+      const completed = milestones.filter((m) => m.status === "completed").length;
+      const planned = milestones.filter((m) => m.status === "planned").length;
+      const inProgress = milestones.filter((m) => m.status === "in-progress").length;
+      const blocked = milestones.filter((m) => m.status === "blocked").length;
+      const pct = total ? Math.round((completed / total) * 100) : 0;
+
+      document.getElementById("statsText").textContent =
+        `${completed} of ${total} milestones completed (${pct}%)`;
+      document.getElementById("statusCounts").textContent =
+        `Planned: ${planned} · In Progress: ${inProgress} · Completed: ${completed} · Blocked: ${blocked}`;
+      document.getElementById("progressFill").style.width = `${pct}%`;
+    }
+
+    function getFilteredMilestones() {
+      const q = searchQuery.trim().toLowerCase();
+      return milestones.filter((m) => {
+        const matchesFilter = activeFilter === "all" || m.status === activeFilter;
+        const matchesSearch =
+          !q ||
+          m.project.toLowerCase().includes(q) ||
+          m.title.toLowerCase().includes(q) ||
+          (m.notes && m.notes.toLowerCase().includes(q));
+        return matchesFilter && matchesSearch;
+      });
+    }
+
+    function renderCards() {
+      const list = getFilteredMilestones();
+      if (!list.length) {
+        cardsGrid.innerHTML = `<div class="empty">No milestone cards match your current filter.</div>`;
+        return;
+      }
+
+      cardsGrid.innerHTML = list
+        .map((m) => {
+          const statusClass = `status-${m.status}`;
+          const statusText = STATUS_LABELS[m.status] || m.status;
+          const dateText = m.dueDate ? `Target: ${escapeHtml(m.dueDate)}` : "No target date";
+          return `
+            <article class="milestone-card">
+              <div>
+                <div class="card-top">
+                  <div>
+                    <div class="project-tag">${escapeHtml(m.project)}</div>
+                    <h3 class="milestone-title">${escapeHtml(m.title)}</h3>
+                  </div>
+                  <span class="badge ${statusClass}">${statusText}</span>
+                </div>
+                ${m.notes ? `<p class="notes" style="margin-top:10px;">${escapeHtml(m.notes)}</p>` : ""}
+              </div>
+              <div>
+                <div class="meta">
+                  <span>Priority: <strong>${escapeHtml(m.priority)}</strong></span>
+                  <span>${dateText}</span>
+                </div>
+                <div class="card-actions" style="margin-top:10px;">
+                  <button type="button" onclick="cycleStatus('${m.id}')">Next Status</button>
+                  <button type="button" onclick="startEdit('${m.id}')">Edit</button>
+                  <button type="button" class="danger" onclick="deleteMilestone('${m.id}')">Delete</button>
+                </div>
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+    }
+
+    function render() {
+      renderStats();
+      renderCards();
+    }
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const project = projectInput.value.trim();
+      const title = titleInput.value.trim();
+      if (!project || !title) return;
+
+      const payload = {
+        project,
+        title,
+        status: statusInput.value,
+        priority: priorityInput.value,
+        dueDate: dueDateInput.value,
+        notes: notesInput.value.trim()
+      };
+
+      if (editIdInput.value) {
+        milestones = milestones.map((m) =>
+          m.id === editIdInput.value ? { ...m, ...payload } : m
+        );
+        showToast("Milestone updated");
+      } else {
+        milestones.unshift({
+          id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
+          ...payload
+        });
+        showToast("Milestone card added");
+      }
+
+      saveMilestones();
+      resetForm();
+      render();
+    });
+
+    cancelEditBtn.addEventListener("click", resetForm);
+
+    filterBar.addEventListener("click", (e) => {
+      const btn = e.target.closest(".filter-btn");
+      if (!btn) return;
+      activeFilter = btn.dataset.filter;
+      filterBar.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderCards();
+    });
+
+    searchInput.addEventListener("input", (e) => {
+      searchQuery = e.target.value;
+      renderCards();
+    });
+
+    document.getElementById("copySummaryBtn").addEventListener("click", async () => {
+      const list = getFilteredMilestones();
+      if (!list.length) {
+        showToast("Nothing to copy");
+        return;
+      }
+      const lines = ["PROJECT MILESTONE UPDATE", "--------------------------"];
+      list.forEach((m) => {
+        const label = STATUS_LABELS[m.status] || m.status;
+        const due = m.dueDate ? ` | Due: ${m.dueDate}` : "";
+        lines.push(`[${label}] ${m.project} — ${m.title} (${m.priority}${due})`);
+        if (m.notes) lines.push(`  • ${m.notes}`);
+      });
+      const text = lines.join("\n");
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("Update copied to clipboard");
+      } catch {
+        showToast("Clipboard blocked—use Export JSON");
+      }
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const blob = new Blob([JSON.stringify(milestones, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "milestone-cards.json";
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("Exported milestone-cards.json");
+    });
+
+    const importFileInput = document.getElementById("importFileInput");
+    document.getElementById("importTriggerBtn").addEventListener("click", () => {
+      importFileInput.click();
+    });
+
+    importFileInput.addEventListener("change", (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const imported = JSON.parse(String(reader.result));
+          if (!Array.isArray(imported)) throw new Error("Invalid format");
+          milestones = imported;
+          saveMilestones();
+          render();
+          showToast("Imported milestones");
+        } catch {
+          showToast("Invalid JSON file");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    });
+
+    render();
+  </script>
+</body>
+</html>
